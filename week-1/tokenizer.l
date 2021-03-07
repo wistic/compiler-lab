@@ -7,19 +7,28 @@
     int identifier_count = 0;
     int separator_count = 0;
     int constant_count = 0;
+    int comment_count = 0;
 %}
 %option yylineno
 
 /* Regex definitions */
 
+double_line_comment "/*"(.*[\n]*.*)*"*/"
+single_line_comment ("//"(.*[ \t]*.*)*[\n])
+constants (0|[1-9][0-9]*)|((0|[1-9][0-9]*)"."[0-9]+)|('[^\\]')|(\"([^\\\"\n]|\\\\|\\\"|\\n)*\")
 keywords "if"|"else"|"for"|"void"|"while"|"char"|"int"|"do"|"continue"|"default"|"const"|"float"
 operators "++"|"--"|"+="|"-="|"=="|"<="|">="|"*="|"/="|"%="|"!="|"+"|"-"|"*"|"/"|"="|"<"|"!"|">"|"%"|"||"|"&&"|"|"|"&"
-separators [(){}\[\],;:]
 identifiers [a-zA-Z_][a-zA-Z0-9_]*
-constants (0|[1-9][0-9]*)|((0|[1-9][0-9]*)"."[0-9]+)|('[^\\]')|(\"([^\\\"\n]|\\\\|\\\"|\\n)*\")
+separators [(){}\[\],;:]
 
 /* Rules for counting the tokens*/
 %%
+{double_line_comment} { comment_count++;
+                        fprintf(yyout, "\tcomment: %s\n", yytext); }
+
+{single_line_comment} { comment_count++;
+                        fprintf(yyout, "\tcomment: %sLine %d\n", yytext, yylineno); }
+
 {constants} { constant_count++;
             fprintf(yyout, "\tconstant(literal): %s\n", yytext); }
 
@@ -76,7 +85,8 @@ int main(int argc, char *argv[]){
     fprintf(yyout, "\tCount of identifiers: %d\n", identifier_count);
     fprintf(yyout, "\tCount of separators: %d\n", separator_count);
     fprintf(yyout, "\tCount of operators: %d\n", operator_count);
-    fprintf(yyout, "\tTotal count of recognized tokens: %d\n", constant_count+keyword_count+identifier_count+separator_count+operator_count);
+    fprintf(yyout, "\tCount of comments: %d\n", comment_count);
+    fprintf(yyout, "\tTotal count of recognized tokens: %d\n", constant_count+keyword_count+identifier_count+separator_count+operator_count+comment_count);
     
     return 0;
 }
