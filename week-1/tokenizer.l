@@ -16,8 +16,8 @@
 double_line_comment "/*"(.*[\n]*.*)*"*/"
 single_line_comment ("//"(.*[ \t]*.*)*[\n])
 constants (0|[1-9][0-9]*)|((0|[1-9][0-9]*)"."[0-9]+)|('[^\\]')|(\"([^\\\"\n]|\\\\|\\\"|\\n)*\")
-keywords "if"|"else"|"for"|"void"|"while"|"char"|"int"|"do"|"continue"|"default"|"const"|"float"
-operators "++"|"--"|"+="|"-="|"=="|"<="|">="|"*="|"/="|"%="|"!="|"+"|"-"|"*"|"/"|"="|"<"|"!"|">"|"%"|"||"|"&&"|"|"|"&"
+keywords "if"|"else"|"void"|"while"|"char"|"int"|"return"
+operators "++"|"--"|"+="|"-="|"=="|"<="|">="|"*="|"/="|"!="|"+"|"-"|"*"|"/"|"="|"<"|"!"|">"|"|"
 identifiers [a-zA-Z_][a-zA-Z0-9_]*
 separators [(){}\[\],;:]
 
