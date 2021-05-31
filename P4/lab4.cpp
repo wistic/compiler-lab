@@ -23,53 +23,35 @@ vector<Rule> grammar = {
 	{'F', '(', 'S', ')'},
 	{'F', 'i'}};
 
-map<char, Set> get_first(vector<Rule> rules);
-map<char, Set> get_follow(vector<Rule> rules, map<char, Set> first);
-void parse_input(string input, ParsingTable tbl, vector<Rule> rules);
-ParsingTable get_table(vector<Rule> rules, map<char, Set> first, map<char, Set> follow);
+map<char, Set> getFirstSet(vector<Rule> productions);
+map<char, Set> getFollowSet(vector<Rule> productions, map<char, Set> first_set);
+void checkValidity(string input, ParsingTable parsing_table, vector<Rule> productions);
+ParsingTable getParsingTable(vector<Rule> productions, map<char, Set> first_set, map<char, Set> follow_set);
 
-int main(void)
+map<char, Set> getFirstSet(vector<Rule> productions)
 {
-	map<char, Set> first = get_first(grammar);
+	map<char, Set> first_set;
 
-	map<char, Set> follow = get_follow(grammar, first);
-
-	ParsingTable tbl = get_table(grammar, first, follow);
-
-	string input;
-	getline(cin, input);
-
-	input.push_back('$');
-	parse_input(input, tbl, grammar);
-
-	return 0;
-}
-
-map<char, Set> get_first(vector<Rule> rules)
-{
-	map<char, Set> first;
-
-	for (auto &vec : rules)
+	for (auto &vec : productions)
 	{
 		for (auto &ch : vec)
 		{
 			if (isupper(ch))
 			{
-				first.insert({ch, {}});
+				first_set.insert({ch, {}});
 			}
 			else
 			{
-				first.insert({ch, {ch}});
+				first_set.insert({ch, {ch}});
 			}
 		}
 	}
 
-	bool did_change = false;
+	bool change = false;
 	do
 	{
-		did_change = false;
-		// print_first(first);
-		for (auto &rule : rules)
+		change = false;
+		for (auto &rule : productions)
 		{
 			char non_terminal = rule.front();
 			bool is_nullable = true;
@@ -77,18 +59,18 @@ map<char, Set> get_first(vector<Rule> rules)
 			for (; it < rule.end() && is_nullable; ++it)
 			{
 				is_nullable = false;
-				for (auto ch : first.at(*it))
+				for (auto ch : first_set.at(*it))
 				{
 					if (ch != EPSILON)
 					{
 						// cout << (non_terminal) << ch << endl;
-						if (!did_change)
+						if (!change)
 						{
-							did_change = first.at(non_terminal).insert(ch).second;
+							change = first_set.at(non_terminal).insert(ch).second;
 						}
 						else
 						{
-							first.at(non_terminal).insert(ch);
+							first_set.at(non_terminal).insert(ch);
 						}
 					}
 					else
@@ -99,77 +81,77 @@ map<char, Set> get_first(vector<Rule> rules)
 			}
 			if (is_nullable && it == rule.end())
 			{
-				first.at(non_terminal).insert(EPSILON);
+				first_set.at(non_terminal).insert(EPSILON);
 			}
 		}
-	} while (did_change);
+	} while (change);
 
-	return first;
+	return first_set;
 }
 
-map<char, Set> get_follow(vector<Rule> rules, map<char, Set> first)
+map<char, Set> getFollowSet(vector<Rule> productions, map<char, Set> first_set)
 {
-	map<char, Set> follow;
-	for (auto &it : rules)
+	map<char, Set> follow_set;
+	for (auto &it : productions)
 	{
 		for (auto &ch : it)
 		{
-			follow.insert({ch, {}});
+			follow_set.insert({ch, {}});
 		}
 	}
-	follow.at(rules.begin()->front()) = {'$'};
+	follow_set.at(productions.begin()->front()) = {'$'};
 
-	bool did_change = false;
+	bool change = false;
 	do
 	{
-		did_change = false;
-		for (auto &rule : rules)
+		change = false;
+		for (auto &rule : productions)
 		{
-			for (auto &symbol : follow.at(rule.front()))
+			for (auto &symbol : follow_set.at(rule.front()))
 			{
-				did_change |= follow.at(rule.back()).insert(symbol).second;
+				change |= follow_set.at(rule.back()).insert(symbol).second;
 			}
-			auto rest = follow.at(rule.front());
+			auto rest = follow_set.at(rule.front());
 			for (size_t idx = rule.size() - 1; idx >= 2; --idx)
 			{
-				for (auto &it : first.at(rule[idx]))
+				for (auto &it : first_set.at(rule[idx]))
 				{
 					if (it != EPSILON)
 					{
-						did_change |= follow.at(rule[idx - 1]).insert(it).second;
+						change |= follow_set.at(rule[idx - 1]).insert(it).second;
 					}
 					else
 					{
 						for (auto &v : rest)
 						{
-							did_change |= follow.at(rule[idx - 1]).insert(v).second;
+							change |= follow_set.at(rule[idx - 1]).insert(v).second;
 						}
 					}
 				}
-				rest = follow.at(rule[idx - 1]);
+				rest = follow_set.at(rule[idx - 1]);
 			}
 		}
-	} while (did_change);
+	} while (change);
 
-	return follow;
+	return follow_set;
 }
 
-ParsingTable get_table(vector<Rule> rules,
-					   map<char, Set> first, map<char, Set> follow)
+ParsingTable getParsingTable(vector<Rule> productions,
+							 map<char, Set> first_set, map<char, Set> follow_set)
 {
-	ParsingTable tbl;
-	for (size_t i = 0; i < rules.size(); ++i)
+	ParsingTable parsing_table;
+	for (size_t i = 0; i < productions.size(); ++i)
 	{
 		bool is_nullable = true;
 		size_t idx = 1;
-		for (; idx < rules[i].size() && is_nullable; ++idx)
+		for (; idx < productions[i].size() && is_nullable; ++idx)
 		{
 			is_nullable = false;
-			for (auto &ch : first.at(rules[i][idx]))
+			for (auto &ch : first_set.at(productions[i][idx]))
 			{
 				if (ch != EPSILON)
 				{
-					tbl.insert({{rules[i].front(), ch}, i});
+					parsing_table.insert({{productions[i].front(), ch}, i});
 				}
 				else
 				{
@@ -177,20 +159,20 @@ ParsingTable get_table(vector<Rule> rules,
 				}
 			}
 		}
-		if (is_nullable && idx == rules[i].size())
+		if (is_nullable && idx == productions[i].size())
 		{
-			for (auto &it : follow.at(rules[i].front()))
+			for (auto &it : follow_set.at(productions[i].front()))
 			{
-				tbl.insert({{rules[i].front(), it}, i});
+				parsing_table.insert({{productions[i].front(), it}, i});
 			}
 		}
 	}
-	return tbl;
+	return parsing_table;
 }
 
-void parse_input(string input, ParsingTable tbl, vector<Rule> rules)
+void checkValidity(string input, ParsingTable parsing_table, vector<Rule> productions)
 {
-	vector<char> stack = {'$', rules[0].front()};
+	vector<char> stack = {'$', productions[0].front()};
 	size_t inp_length = input.length();
 	auto inp_it = input.begin();
 
@@ -226,18 +208,18 @@ void parse_input(string input, ParsingTable tbl, vector<Rule> rules)
 		char inp = input.front();
 		if (isupper(top))
 		{
-			if (tbl.find({top, inp}) != tbl.end())
+			if (parsing_table.find({top, inp}) != parsing_table.end())
 			{
 				stack.pop_back();
-				int rule_idx = tbl.at({top, inp});
-				for (auto it = rules[rule_idx].end() - 1; it > rules[rule_idx].begin(); --it)
+				int rule_idx = parsing_table.at({top, inp});
+				for (auto it = productions[rule_idx].end() - 1; it > productions[rule_idx].begin(); --it)
 				{
 					stack.push_back(*it);
 				}
 			}
 			else
 			{
-				cerr << "Can't parse further" << endl;
+				cerr << "Error: Input string doesn't fit in the given grammar." << endl;
 				exit(1);
 			}
 		}
@@ -250,7 +232,7 @@ void parse_input(string input, ParsingTable tbl, vector<Rule> rules)
 			}
 			else
 			{
-				cerr << "Can't parse further" << endl;
+				cerr << "Error: Input string doesn't fit in the given grammar." << endl;
 				exit(1);
 			}
 		}
@@ -258,6 +240,22 @@ void parse_input(string input, ParsingTable tbl, vector<Rule> rules)
 	if (stack.empty() && inp_it == input.end())
 	{
 		cout << endl
-			 << "Successfully parsed" << endl;
+			 << "Input string successfully validated." << endl;
 	}
+}
+
+int main(void)
+{
+	map<char, Set> first_set = getFirstSet(grammar);
+	map<char, Set> follow_set = getFollowSet(grammar, first_set);
+
+	ParsingTable parsing_table = getParsingTable(grammar, first_set, follow_set);
+
+	string input;
+	getline(cin, input);
+
+	input.push_back('$');
+	checkValidity(input, parsing_table, grammar);
+
+	return 0;
 }
