@@ -24,31 +24,31 @@ separators [(){}\[\],;:]
 /* Rules for counting the tokens*/
 %%
 {double_line_comment} { comment_count++;
-                        fprintf(yyout, "\tcomment: %s\n", yytext); }
+                        fprintf(yyout, "\t<comment, %s>\n", yytext); }
 
 {single_line_comment} { comment_count++;
-                        fprintf(yyout, "\tcomment: %sLine %d\n", yytext, yylineno); }
+                        fprintf(yyout, "\t<comment, %sLine %d>\n", yytext, yylineno); }
 
 {constants} { constant_count++;
-            fprintf(yyout, "\tconstant(literal): %s\n", yytext); }
+            fprintf(yyout, "\t<CT, %s>\n", yytext); }
 
 {keywords} { keyword_count++;
-            fprintf(yyout, "\tkeyword: %s\n", yytext); }
+            fprintf(yyout, "\t<KY, %s>\n", yytext); }
 
 {operators} { operator_count++;
-            fprintf(yyout, "\toperator: %s\n", yytext); }
+            fprintf(yyout, "\t<OP, %s>\n", yytext); }
 
 {identifiers} { identifier_count++;
-            fprintf(yyout, "\tidentifier: %s\n", yytext); }
+            fprintf(yyout, "\t<ID, %s>\n", yytext); }
 
 \n { fprintf(yyout, "Line %d\n", yylineno); }
 
 {separators} { separator_count++;
-                fprintf(yyout, "\tseparator: %s\n", yytext); }
+                fprintf(yyout, "\t<SP, %s>\n", yytext); }
 
 [\t ]   ;
 
-. { fprintf(yyout, "\tUnexpected token: %s\n", yytext); }
+. { fprintf(yyout, "\t<unknown, %s>\n", yytext); }
 
 %%
 
