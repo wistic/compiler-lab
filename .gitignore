@@ -1,4 +1,4 @@
-samples/
+.vscode/
 lex.yy.c
 a.out
 input.txt
